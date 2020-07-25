@@ -1,6 +1,6 @@
 # Golang CircleCI 2.0 configuration file
-#
 # Check https://circleci.com/docs/2.0/language-go/ for more details
+# TODO make this work
 version: 2
 jobs:
   build:
@@ -20,7 +20,21 @@ jobs:
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
-
+      - run: echo "A first hello" # This prints "A first hello" to stdout.
       # specify any bash command here prefixed with `run: `
       - run: go get -v -t -d ./...
-      - run: go test -v ./...
+  test:
+    docker:
+      - image: circleci/golang:1.9
+    working_directory: /go/src/github.com/bcmdarroch/go-sample
+    steps:
+      - checkout
+      - run: echo "A more familiar hi" # We run a similar echo command to above.
+      - run: go test -v ./...  
+# Under the workflows: map, we can coordinate our two jobs, defined above.
+workflows:
+  version: 2
+  build_and_test: # this is the name of our workflow
+    jobs: # and here we list the jobs we are going to run.
+      - build
+      - test
