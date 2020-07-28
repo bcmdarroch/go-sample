@@ -20,21 +20,25 @@ jobs:
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
-      - run: echo "A first hello" # This prints "A first hello" to stdout.
+      - run: echo "✧✧✧ Downloading deps ✧✧✧"
       # specify any bash command here prefixed with `run: `
-      - run: go get -v -t -d ./...
+      - run: go mod download
+      # TODO: build the binary and creates docker iamge
   test:
     docker:
       - image: circleci/golang:1.9
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
-      - run: echo "A more familiar hi" # We run a similar echo command to above.
+      - run: go mod download
+      - run: echo "✧✧✧ Running Go tests ✧✧✧"
       - run: go test -v ./...  
 # Under the workflows: map, we can coordinate our two jobs, defined above.
 workflows:
   version: 2
-  build_and_test: # this is the name of our workflow
+  feature_branch: # this is the name of our workflow
     jobs: # and here we list the jobs we are going to run.
-      - build
       - test
+      - build:
+          requires:
+            - test
