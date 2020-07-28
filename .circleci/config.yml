@@ -6,7 +6,7 @@ jobs:
   build:
     docker:
       # specify the version
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.14
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -26,7 +26,7 @@ jobs:
       # TODO: build the binary and creates docker iamge
   test:
     docker:
-      - image: circleci/golang:1.9
+      - image: circleci/golang:1.14
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
