@@ -3,6 +3,15 @@
 # TODO make this work
 version: 2
 jobs:
+  test:
+    docker:
+      - image: circleci/golang:1.14
+    working_directory: /go/src/github.com/bcmdarroch/go-sample
+    steps:
+      - checkout
+      - run: go mod download
+      - run: echo "✧✧✧ Running Go tests ✧✧✧"
+      - run: go test -v ./...  
   build:
     docker:
       # specify the version
@@ -24,15 +33,14 @@ jobs:
       # specify any bash command here prefixed with `run: `
       - run: go mod download
       # TODO: build the binary and creates docker iamge
-  test:
+  release:
     docker:
       - image: circleci/golang:1.14
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
-      - run: go mod download
-      - run: echo "✧✧✧ Running Go tests ✧✧✧"
-      - run: go test -v ./...  
+      - run: echo "✧✧✧ Building latest release ✧✧✧"
+      # TODO: push docker image towards repo for release
 # Under the workflows: map, we can coordinate our two jobs, defined above.
 workflows:
   version: 2
@@ -42,3 +50,9 @@ workflows:
       - build:
           requires:
             - test
+      - release:
+          requires:
+            - test
+          filters:
+            branches:
+              only: master 
