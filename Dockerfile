@@ -1,13 +1,9 @@
-FROM golang:1.10.3-stretch
-ARG PACKAGE=webapp
+FROM golang:1.14-alpine AS build
 
-RUN mkdir /app # for built artifacts
-RUN mkdir -p $GOPATH/src/${PACKAGE}
-WORKDIR $GOPATH/src/${PACKAGE}
+WORKDIR /src/
+COPY main.go go.* /src/
+RUN CGO_ENABLED=0 go build -o /bin/demo
 
-# better for build cache to specify necessary files
-ADD ["Gopkg.*","main.go", "./"]
-RUN go get -u -v github.com/golang/dep/cmd/dep && dep ensure -v
-RUN go build -v -o /app/server .
-
-CMD ["/app/server"]
+FROM scratch
+COPY --from=build /bin/demo /bin/demo
+ENTRYPOINT ["/bin/demo"]
