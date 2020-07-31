@@ -40,6 +40,7 @@ jobs:
     steps:
       - checkout
       - run: echo "✧✧✧ Building latest release ✧✧✧"
+      - run: docker image build -t hello .
       # TODO: push docker image towards repo for release
 # Under the workflows: map, we can coordinate our two jobs, defined above.
 workflows:
