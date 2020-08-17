@@ -29,6 +29,7 @@ jobs:
     working_directory: /go/src/github.com/bcmdarroch/go-sample
     steps:
       - checkout
+      - setup_remote_docker
       - run: echo "✧✧✧ Building latest release ✧✧✧"
       # - run: aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 689767776207.dkr.ecr.us-west-2.amazonaws.com
       - run: docker image build -t 689767776207.dkr.ecr.us-west-2.amazonaws.com/hello:$CIRCLE_TAG .
@@ -37,6 +38,7 @@ jobs:
     docker:
       - image: circleci/aws-cli:1.2.1
     steps:
+      - setup_remote_docker
       - run: docker images 689767776207.dkr.ecr.us-west-2.amazonaws.com/hello
 # Under the workflows: map, we can coordinate our two jobs, defined above.
 workflows:
