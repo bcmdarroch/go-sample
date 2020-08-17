@@ -60,3 +60,11 @@ workflows:
               only: /^v.*/
             branches:
               ignore: /.*/
+      - ecr_push:
+          requires:
+            - release
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              ignore: /.*/
