@@ -43,7 +43,10 @@ workflows:
   version: 2
   feature_branch: # this is the name of our workflow
     jobs: # and here we list the jobs we are going to run.
-      - test
+      - test:
+          filters:
+            tags:
+              only: /^v.*/
       - build:
           requires:
             - test
