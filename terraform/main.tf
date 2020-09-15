@@ -9,6 +9,10 @@ variable "instance_type" {
     default = "t2.micro" # t family = burstable, can only use 100% sometimes, cheap!
 }
  
+variable "region" {
+    default = "us-west-2"
+}
+
 # lets us run aws things
 provider "aws" {
     version = "~> 3.0"
@@ -30,5 +34,53 @@ resource "aws_instance" "nomad" {
         terminate = "anytime"
         owner = "b-hewer-darroch"
     }
-    # TODO assign to a network
+    subnet_id = list(data.aws_subnet_ids.vpc1_public.ids)[0]
+}
+
+# data below from: https://github.com/hashicorp/terraform-aws-cloud-nomad-server/blob/master/datasources.tf
+# already created by hashi
+data "aws_vpc" "vpc1" {
+  tags = {
+    Name = "vpc1"
+  }
+}
+
+data "aws_subnet_ids" "vpc1_public" {
+  vpc_id = data.aws_vpc.vpc1.id
+  filter {
+    name = "tag:Name"
+    values = [
+      "vpc1-public-${var.region}a",
+      "vpc1-public-${var.region}b",
+      "vpc1-public-${var.region}c",
+    ]
+  }
+}
+
+resource "aws_security_group" "nomad_server" {
+  name        = "test_nomad_server"
+  description = "Sets rules for nomad server" # required, gets auto-set to "Managed by Terraform"
+  vpc_id      = data.aws_vpc.vpc1.id
+
+  ingress {
+    description = "ssh from my laptop"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["73.19.107.16/32"]
+  }
+
+  # allows anything (0 = anything) 
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"] # no bits are masked, every part of IP address can be anything
+  }
+
+  tags = {
+    Name = "test_nomad_server"
+    owner = "b-hewer-darroch"
+    delete = "anytime"
+  }
 }
