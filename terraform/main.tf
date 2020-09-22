@@ -10,19 +10,23 @@ variable "instance_type" {
 }
  
 variable "region" {
-    default = "us-west-2"
+    default = "us-east-1"
 }
 
 # lets us run aws things
 provider "aws" {
     version = "~> 3.0"
-    region = "us-west-2"
+    region = var.region
 }
 
 # creates ecr repo
 #         aws product          internal tf name   
 resource "aws_ecr_repository" "go-sample" {
     name = "hello" # name of the image we want to push uo
+}
+
+locals {
+  subnet_id = tolist(data.aws_subnet_ids.vpc1_public.ids)[0]
 }
 
 # create ec2 instance to run our nomad server on 
@@ -34,7 +38,13 @@ resource "aws_instance" "nomad" {
         terminate = "anytime"
         owner = "b-hewer-darroch"
     }
-    subnet_id = list(data.aws_subnet_ids.vpc1_public.ids)[0]
+    subnet_id = local.subnet_id
+    vpc_security_group_ids = [aws_security_group.nomad_server.id]
+
+    user_data = <<EOF
+    #!/bin/bash
+    echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCghBiCHBURbmY11Ny6/GmVDj7df8qYu+WCqSPH4oBfVoiyWOgig+gH/LngjBpP/rhi4BIbko5A02k+vqw8p1655DbF6KtHk2CUFmlVqatQU2FJMI9j7VOeDHqOa/BxKACj+UYZRfsbpQorRSeqRAjChzS3iNnSAVALhGwGiNBAkNj5MafIVronQ1mBFQZt1JpedCrjcWepkLKyUYWKJFMuElUhPNyUGuojKzfw2O8tL+ZMyAKI9/n61eA8vVdTaZx+sXuXOYXRGIDKBqDcvCOChZk4oXq3iSSs2gFlQTkTIVvRskwbogrDgPeYU4j1Tfo478SwHHO56bjrfDcQjlbBdCDjyADKqi47EzaZs9nvKcdhbYqZTpPNE4AsPekV7G6f9wbK1aTOBh6rzHpA2hdAgN20vKWDHqrNY0QzWMC3ypqem9fYREaaLtePXQFCktosxaecB9o3FOS/4quUFEhOrhDHi7kkesdSHG20vhXs9oaSVu4sh1Q9lb/uIZmMyr0RZd1jyCpjowwzhDLJseZ57+ipoY3Jq9i9blqnZjMuwodI3CuLd1rSww+QO4dQlF80OruFsbrxGo+ANG1OcIRVw575GQNGvZZ/jPEXTb1kr+Xc8jwEoxF4KhPMEHUiPbdfBRAS1KtZ9BKj9YwtnaaLcrAgwspGHqBxtN53P5alow== brenna@hashicorp.com" >> /home/ec2-user/.ssh/authorized_keys
+    EOF
 }
 
 # data below from: https://github.com/hashicorp/terraform-aws-cloud-nomad-server/blob/master/datasources.tf
