@@ -41,9 +41,15 @@ resource "aws_instance" "nomad" {
     subnet_id = local.subnet_id
     vpc_security_group_ids = [aws_security_group.nomad_server.id]
 
+    # runs as root only at the start of the instance 
     user_data = <<EOF
     #!/bin/bash
     echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQCghBiCHBURbmY11Ny6/GmVDj7df8qYu+WCqSPH4oBfVoiyWOgig+gH/LngjBpP/rhi4BIbko5A02k+vqw8p1655DbF6KtHk2CUFmlVqatQU2FJMI9j7VOeDHqOa/BxKACj+UYZRfsbpQorRSeqRAjChzS3iNnSAVALhGwGiNBAkNj5MafIVronQ1mBFQZt1JpedCrjcWepkLKyUYWKJFMuElUhPNyUGuojKzfw2O8tL+ZMyAKI9/n61eA8vVdTaZx+sXuXOYXRGIDKBqDcvCOChZk4oXq3iSSs2gFlQTkTIVvRskwbogrDgPeYU4j1Tfo478SwHHO56bjrfDcQjlbBdCDjyADKqi47EzaZs9nvKcdhbYqZTpPNE4AsPekV7G6f9wbK1aTOBh6rzHpA2hdAgN20vKWDHqrNY0QzWMC3ypqem9fYREaaLtePXQFCktosxaecB9o3FOS/4quUFEhOrhDHi7kkesdSHG20vhXs9oaSVu4sh1Q9lb/uIZmMyr0RZd1jyCpjowwzhDLJseZ57+ipoY3Jq9i9blqnZjMuwodI3CuLd1rSww+QO4dQlF80OruFsbrxGo+ANG1OcIRVw575GQNGvZZ/jPEXTb1kr+Xc8jwEoxF4KhPMEHUiPbdfBRAS1KtZ9BKj9YwtnaaLcrAgwspGHqBxtN53P5alow== brenna@hashicorp.com" >> /home/ec2-user/.ssh/authorized_keys
+    
+    sudo yum-config-manager --add-repo https://rpm.releases.hashicorp.com/AmazonLinux/hashicorp.repo
+    sudo yum -y install nomad
+
+    systemctl start nomad
     EOF
 }
 
@@ -80,6 +86,14 @@ resource "aws_security_group" "nomad_server" {
     cidr_blocks = ["73.19.107.16/32"]
   }
 
+  ingress {
+    description = "nomad ui access"
+    from_port   = 4646
+    to_port     = 4648
+    protocol    = "tcp"
+    cidr_blocks = ["73.19.107.16/32"]
+  }
+
   # allows anything (0 = anything) 
   egress {
     from_port   = 0
@@ -93,4 +107,8 @@ resource "aws_security_group" "nomad_server" {
     owner = "b-hewer-darroch"
     delete = "anytime"
   }
+}
+
+output "ip_address" {
+  value = aws_instance.nomad.public_ip
 }
