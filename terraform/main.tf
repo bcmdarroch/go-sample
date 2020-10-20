@@ -26,7 +26,7 @@ resource "aws_ecr_repository" "go-sample" {
 }
 
 locals {
-  subnet_id = tolist(data.aws_subnet_ids.vpc1_public.ids)[0]
+  subnet_id = module.vpc.public_subnets[0]
 }
 
 # create ec2 instance to run our nomad server on 
@@ -53,30 +53,10 @@ resource "aws_instance" "nomad" {
     EOF
 }
 
-# data below from: https://github.com/hashicorp/terraform-aws-cloud-nomad-server/blob/master/datasources.tf
-# already created by hashi
-data "aws_vpc" "vpc1" {
-  tags = {
-    Name = "vpc1"
-  }
-}
-
-data "aws_subnet_ids" "vpc1_public" {
-  vpc_id = data.aws_vpc.vpc1.id
-  filter {
-    name = "tag:Name"
-    values = [
-      "vpc1-public-${var.region}a",
-      "vpc1-public-${var.region}b",
-      "vpc1-public-${var.region}c",
-    ]
-  }
-}
-
 resource "aws_security_group" "nomad_server" {
   name        = "test_nomad_server"
   description = "Sets rules for nomad server" # required, gets auto-set to "Managed by Terraform"
-  vpc_id      = data.aws_vpc.vpc1.id
+  vpc_id      = module.vpc.vpc_id
 
   ingress {
     description = "ssh from my laptop"
@@ -111,4 +91,23 @@ resource "aws_security_group" "nomad_server" {
 
 output "ip_address" {
   value = aws_instance.nomad.public_ip
+}
+
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "2.21.0"
+
+  name = "brenna-hd-test"
+  cidr = "10.0.0.0/16"
+
+  azs = ["us-east-1a", "us-east-1b"]
+
+  # our nomad cluster will run in one of these, so that Circle CI can talk to it via internet
+  public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
+
+  tags = {
+    Name = "brenna-hd-test"
+    owner = "b-hewer-darroch"
+    delete = "anytime"
+  }
 }
