@@ -100,7 +100,7 @@ module "vpc" {
   name = "brenna-hd-test"
   cidr = "10.0.0.0/16"
 
-  azs = ["us-east-1a", "us-east-1b"]
+  azs = ["${var.region}a", "${var.region}b"]
 
   # our nomad cluster will run in one of these, so that Circle CI can talk to it via internet
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24"]
