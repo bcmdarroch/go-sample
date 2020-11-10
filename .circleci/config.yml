@@ -1,6 +1,10 @@
 # Golang CircleCI 2.0 configuration file
 # Check https://circleci.com/docs/2.0/language-go/ for more details
-version: 2
+version: 2.1
+
+orbs:
+  aws-ecr: circleci/aws-ecr@6.14.0
+
 jobs:
   test:
     docker:
@@ -39,7 +43,7 @@ jobs:
       - image: circleci/aws-cli:1.2.1
     steps:
       - setup_remote_docker
-      - run: docker images 689767776207.dkr.ecr.us-west-2.amazonaws.com/hello
+      - run: docker images 102179876835.dkr.ecr.us-east-1.amazonaws.com/hello
 # Under the workflows: map, we can coordinate our two jobs, defined above.
 workflows:
   version: 2
@@ -49,22 +53,30 @@ workflows:
           filters:
             tags:
               only: /^v.*/
-      - build:
+      # unnecessary now that we're using aws-ecr orb below: 
+      # - build:
+      #     requires:
+      #       - test
+      # - release:
+      #     requires:
+      #       - test
+          # filters:
+          #   tags:
+          #     only: /^v.*/
+          #   branches:
+          #     ignore: /.*/
+      - aws-ecr/build-and-push-image: # uses orb predefined job 
+          region: us-east-1
+          account-url: 102179876835.dkr.ecr.us-east-1.amazonaws.com
+          repo: hello
+          tag: ${CIRCLE_TAG}
           requires:
             - test
-      - release:
-          requires:
-            - test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
-      - ecr_push:
-          requires:
-            - release
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              ignore: /.*/
+          # filters:
+          #   tags:
+          #     only: /^v.*/
+          #   branches:
+          #     ignore: /.*/
+
+          # TODO: we'll add another workflow for releases, which runs test job and builds and push 
+          # (feat branch will just run test)
