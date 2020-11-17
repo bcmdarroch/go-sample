@@ -68,7 +68,7 @@ workflows:
       - aws-ecr/build-and-push-image: # uses orb predefined job 
           region: AWS_DEFAULT_REGION
           repo: hello
-          tag: ${CIRCLE_TAG}
+          tag: "${CIRCLE_TAG},latest"
           requires:
             - test
           # filters:
